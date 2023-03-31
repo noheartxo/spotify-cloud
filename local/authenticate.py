@@ -2,19 +2,17 @@ from dotenv import load_dotenv
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 
-"""
-Authentication Class
-1. list scopes, put all into a list
-2. load environment variables from dotenv
-3. Call OAuth function (figure out way to get url redirect)
-"""
-
-scope_list = ["user-library-read", "user-read-recently-played", "playlist-modify-private"]
+scope_list = ["ugc-image-upload", "user-read-playback-state", "user-modify-playback-state", 
+              "user-read-currently-playing", "app-remote-control", "streaming", "playlist-read-private", 
+              "playlist-read-collaborative", "playlist-modify-private", "playlist-modify-public", "user-follow-modify", 
+              "user-follow-read", "user-read-playback-position", "user-top-read", "user-read-recently-played", 
+              "user-library-modify", "user-library-read", "user-read-email", "user-read-private"]
 
 class Authenticate:
     def __init__(self, scope):
         load_dotenv()
         self.scope = scope
+        
         #spotipy client
         self.spotipy = Spotify(auth_manager=SpotifyOAuth(scope=scope))
 

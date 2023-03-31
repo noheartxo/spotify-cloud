@@ -1,17 +1,15 @@
-from dotenv import load_dotenv
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyOAuth
 import requests
 import base64
 import json
 import os
+import logging
+from dotenv import load_dotenv
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyOAuth
 
-"""
-Authentication Class
-1. list scopes, put all into a list
-2. load environment variables from dotenv
-3. Call OAuth function (figure out way to get url redirect)
-"""
+logging = logging.getLogger().setLevel(logging.INFO)
+
+# scope = ["playlist-read-private", "user-read-recently-played", "user-read-private", "user-library-read"]
 
 scope_list = ["ugc-image-upload", "user-read-playback-state", "user-modify-playback-state", 
               "user-read-currently-playing", "app-remote-control", "streaming", "playlist-read-private", 
@@ -28,11 +26,12 @@ class Authenticate:
 
         #spotipy client
         self.spotipy = Spotify(auth_manager=SpotifyOAuth(scope=scope))
+        logging.info("Created spotipy client object")
 
     def get_spotipy_client(self):
         return self.spotipy
     
-    def request_new_token(self, cache_file):
+    def request_new_token(self, cache_file: str) -> dict:
         SPOTIPY_CLIENT_ID = os.environ['SPOTIPY_CLIENT_ID']
         SPOTIPY_CLIENT_SECRET = os.environ['SPOTIPY_CLIENT_SECRET']
 
@@ -48,10 +47,12 @@ class Authenticate:
         headers = {
             'Authorization': 'Basic %s' % ((base64.b64encode(header_text).decode('ascii')))
         }
-        
-        response = requests.post(self.OAUTH_TOKEN_URL, data=body, headers=headers)
-        response = json.loads(response.text)
-
+        try:
+            response = requests.post(self.OAUTH_TOKEN_URL, data=body, headers=headers)
+            response = json.loads(response.text)
+            logging.info("Made POST request for new access token from Spotify")
+        except requests.exceptions.ConnectionError as e:
+            logging.error("Connection error:", e)
         # adds refresh_token to still be used
         response['refresh_token'] = refresh_token
         return response
