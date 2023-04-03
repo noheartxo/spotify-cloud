@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 
-logging = logging.getLogger().setLevel(logging.INFO)
-
 # scope = ["playlist-read-private", "user-read-recently-played", "user-read-private", "user-library-read"]
 
 scope_list = ["ugc-image-upload", "user-read-playback-state", "user-modify-playback-state", 
@@ -20,12 +18,13 @@ scope_list = ["ugc-image-upload", "user-read-playback-state", "user-modify-playb
 class Authenticate:
     OAUTH_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
-    def __init__(self, scope):
+    def __init__(self, input, auth=False):
         load_dotenv()
-        self.scope = scope
-
         #spotipy client
-        self.spotipy = Spotify(auth_manager=SpotifyOAuth(scope=scope))
+        if auth:
+            self.spotipy = Spotify(auth=input)
+        else:
+            self.spotipy = Spotify(auth_manager=SpotifyOAuth(scope=input))
         logging.info("Created spotipy client object")
 
     def get_spotipy_client(self):

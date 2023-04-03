@@ -1,27 +1,5 @@
 from datetime import datetime, date
 
-class Track:
-    def __init__(self, uri):
-        self.uri = uri
-
-    def get_id(self):
-        return self.id
-    
-    def get_uri(self):
-        return self.uri
-
-    def __repr__(self):
-        return repr("Track(\'%s\')" % (self.uri))
-    
-    def __str__(self):
-        return str("The Spotify track uri is %s" % (self.uri))
-    
-    def __eq__(self, other):
-        return self.uri == other.uri
-    
-    def __hash__(self):
-        return hash(self.uri)  
-
 class Spotify:
     def __init__(self, spotipy):
         # client
@@ -53,8 +31,7 @@ class Spotify:
         track_list = []
         for item in results['items']:
             uri = item['track']['uri']
-            track = Track(uri)
-            track_list.append(track)
+            track_list.append(uri)
         return track_list
 
     """
@@ -65,7 +42,6 @@ class Spotify:
         track_list = []
         while True:
             results = self.spotipy.current_user_saved_tracks(limit=50, offset=offset)
-            # print(results)
             if results['items'] == []:
                 break
             else: 
@@ -101,7 +77,8 @@ class Spotify:
 
     """
     Creates a playlist given a playlist name
-        - unsure if this is a bug with spotipy, but the playlists are obly created publicly even if you specify otherwise
+        - unsure if this is a bug with spotipy, but the playlists are obly created publicly even 
+        if you specify otherwise
     """
     def create_playlist(self, playlist_name: str, public=False) -> str:
         result = self.spotipy.user_playlist_create(self.user_id, playlist_name, public=public)
@@ -130,7 +107,6 @@ class Spotify:
         for item in results:
             added_at = datetime.strptime(item['added_at'][0:10], "%Y-%m-%d").date()
             if date_today >= added_at:
-                uri = item['track']['uri']
-                track = Track(uri)
+                track = item['track']['uri']
                 verified.append(track)
         return verified
