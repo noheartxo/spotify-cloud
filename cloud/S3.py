@@ -12,7 +12,7 @@ class S3:
         except botocore.exceptions.BotoCoreError as boto_error:
             logging.error(boto_error)
 
-    def list_buckets(self):
+    def list_buckets(self) -> None:
         logging.info("Listing all S3 buckets for given user")
         try:
             buckets = self.s3_client.list_buckets()
@@ -52,9 +52,9 @@ class S3:
         except botocore.exceptions.BotoCoreError as boto_error:
             logging.error(boto_error)
 
-    def upload_object_to_bucket(self, bucket_name: str, key: str, content: any, suffix: str) -> None:
+    def upload_object_to_bucket(self, bucket_name: str, key: str, content: any) -> None:
         try:
-            with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
+            with tempfile.NamedTemporaryFile() as temp_file:
                 result = str(content)
                 temp_file.write(result.encode('utf-8'))
                 temp_file.seek(0)
@@ -77,7 +77,7 @@ class S3:
         except botocore.exceptions.BotoCoreError as boto_error:
             logging.error(boto_error)
 
-    def get_object_from_bucket(self, bucket_name: str, filename: str) -> dict:
+    def get_object_from_bucket(self, bucket_name: str, filename: str) -> str:
         try:
             with tempfile.TemporaryFile() as temp_file:
                 self.s3_client.download_fileobj(bucket_name, filename, temp_file)

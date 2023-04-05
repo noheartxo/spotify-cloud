@@ -4,8 +4,6 @@ import logging
 from dotenv import load_dotenv
 from mysql.connector import errorcode
 
-logging = logging.getLogger().setLevel(logging.INFO)
-
 class Database:
     def __init__(self, hostname):
         self.hostname = hostname
@@ -66,9 +64,9 @@ class Database:
                 logging.error(f"{table_name} already exists.")
             else: 
                 logging.error(db_error)
-    
+
     # "values -> {\'uri\': 'spotify:track:<id>'}"
-    def add_to_table(self, db_name: str, table_name: str, values: dict):
+    def add_to_table(self, db_name: str, table_name: str, table_keys: list, values: list):
         try:
             self.cursor.execute(f"USE {db_name}")
         except mysql.connector.ProgrammingError as db_error:
@@ -79,29 +77,52 @@ class Database:
             else: 
                 logging.error(db_error)
         try:
-            table_keys = list(values.keys())
-            query = f"INSERT INTO {table_name}(" + ", ".join(table_keys) + ")" + " VALUES ("
+            query = f"INSERT INTO {table_name} (" + ", ".join(table_keys) + ")" + " VALUES ("
             for idx, value in enumerate(table_keys):
-                if idx != len(table_keys) - 1:
-                    query += f"%({value})s, "
+                print(value)
+                if idx != len(table_keys)-1:
+                    query += f"%s, "
                 else: 
-                    query += f"%({value})s) "
+                    query += f"%s) "
+            values_tuple = [(n,) for n in values]
             logging.info("Inserting into table")
-            self.cursor.execute(query, values)
+            self.cursor.executemany(query, values_tuple)
             # needed so it goes to the actual database or else it's just local essentially
             self.connection.commit()
         except mysql.connector.IntegrityError as db_error:
+            self.connection.rollback()
             logging.error(db_error)
-    
+
     def delete_tables(self, table_name: str):
         try:
             query = f"DROP TABLES IF EXISTS {table_name}"
             self.cursor.execute(query)
         except mysql.connector.Error as db_error:
             logging.error(db_error)
+    
+    def use_database(self, db_name):
+        self.cursor.execute(f"USE {db_name}")
 
-    def delete_item_from_table(self):
-        pass
+    def get_number_of_rows_in_table(self, db_name: str, table_name: str, column_name: str) -> int:
+        try:
+            self.use_database(db_name)
+        except mysql.connector.Error as db_error:
+            logging.error(f"{db_name} does not exist.")
+        try:
+            query = f"SELECT COUNT({column_name}) FROM {table_name}"
+            self.cursor.execute(query)
+            number_of_rows = self.cursor.fetchone()
+            return number_of_rows[0]
+        except mysql.connector.IntegrityError as db_error:
+            logging.error(db_error)
+
+    def delete_item_from_table(self, db_name: str, table_name: str, key: str, values: str) -> None:
+        self.cursor.execute(f"USE {db_name}")
+        query = f"DELETE FROM {table_name} WHERE {key}=%s"
+        values_tuple = [(n,) for n in values]
+        self.cursor.executemany(query, values_tuple)
+        self.connection.commit()
+        logging.info(f"Deleted values from table: {table_name}")
 
     def close_database_connection(self):
         self.connection.close()

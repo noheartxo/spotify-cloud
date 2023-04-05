@@ -21,7 +21,11 @@ class Database:
         return self.cursor
 
     def use_database(self, db_name):
-        self.cursor.execute(f"USE {db_name}")
+        try:
+            self.cursor.execute("USE {}".format(db_name))
+        except pymysql.Error as db_error:
+            self.connection.rollback()
+            logging.error(db_error)
 
     def create_database(self, db_name: str):
         try:
@@ -47,28 +51,29 @@ class Database:
         except pymysql.ProgrammingError as db_error:
             logging.error(db_error)
     
-    # "values -> {\'uri\': 'spotify:track:<id>'}"
-    def add_to_table(self, db_name: str, table_name: str, values: dict):
+    # values -> "['spotify:track:<id>']"
+    def add_to_table(self, db_name: str, table_name: str, table_keys: list, values: list):
         try:
             self.use_database(db_name)
         except pymysql.Error as db_error:
             logging.error(f"{db_name} does not exist.")
         try:
-            table_keys = list(values.keys())
-            query = f"INSERT INTO {table_name}(" + ", ".join(table_keys) + ")" + " VALUES ("
-            for idx, value in enumerate(table_keys):
-                if idx != len(table_keys) - 1:
-                    query += f"%({value})s, "
+            query = f"INSERT INTO {table_name} (" + ", ".join(table_keys) + ")" + " VALUES ("
+            for idx in range(0, len(table_keys)-1):
+                if idx != len(table_keys)-1:
+                    query += f"%s, "
                 else: 
-                    query += f"%({value})s) "
+                    query += f"%s) "
+            values_tuple = [(n,) for n in values]
             logging.info("Inserting into table")
-            self.cursor.execute(query, values)
+            self.cursor.executemany(query, values_tuple)
             # needed so it goes to the actual database or else it's just local essentially
             self.connection.commit()
         except pymysql.IntegrityError as db_error:
+            self.connection.rollback()
             logging.error(db_error)
     
-    def get_number_of_rows_in_table(self, db_name, table_name):
+    def get_number_of_rows_in_table(self, db_name: str, table_name: str) -> int:
         try:
             self.use_database(db_name)
         except pymysql.Error as db_error:
@@ -80,7 +85,7 @@ class Database:
         except pymysql.IntegrityError as db_error:
             logging.error(db_error)
 
-    def get_item_from_table(self, db_name, table_name):
+    def get_item_from_table(self, db_name: str, table_name: str) -> list:
         try:
             self.use_database(db_name)
         except pymysql.Error as db_error:
@@ -100,7 +105,7 @@ class Database:
         except pymysql.Error as db_error:
             logging.error(db_error)
 
-    def delete_item_from_table(self, db_name, table_name, key, values) -> None:
+    def delete_item_from_table(self, db_name: str, table_name: str, key: str, values: list) -> None:
         try:
             self.use_database(db_name)
         except pymysql.Error as db_error:

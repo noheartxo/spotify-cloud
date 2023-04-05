@@ -68,11 +68,11 @@ class Spotify:
             if results['items'] == []:
                 break
             else:
-                playlist_tracks.extend(self.get_track_info(results))
+                if verify_dates:
+                    playlist_tracks.extend(self.verify_dates(results))
+                else:
+                    playlist_tracks.extend(self.get_track_info(results))
                 offset += 50
-        # checks if songs are older than today's date 
-        if verify_dates == True:
-           playlist_tracks = self.verify_dates(playlist_tracks)
         return playlist_tracks
 
     """
@@ -104,7 +104,7 @@ class Spotify:
     def verify_dates(self, results: list) -> list:
         verified = []
         date_today = date.today()
-        for item in results:
+        for item in results['items']:
             added_at = datetime.strptime(item['added_at'][0:10], "%Y-%m-%d").date()
             if date_today >= added_at:
                 track = item['track']['uri']
