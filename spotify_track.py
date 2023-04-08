@@ -9,9 +9,6 @@ class Spotify:
     def get_user_id(self):
         return self.user_id
 
-    def get_uri(self, items):
-        return [uri.get_uri() for uri in items]
-
     """
     Gets the total number of liked songs for the current user
     """
@@ -37,8 +34,7 @@ class Spotify:
     """
     Gets all liked songs in "Your Music"
     """
-    def get_liked_songs(self):
-        offset = 0
+    def get_liked_songs(self, offset=0):
         track_list = []
         while True:
             results = self.spotipy.current_user_saved_tracks(limit=50, offset=offset)
@@ -88,16 +84,17 @@ class Spotify:
     Adds tracks to a playlist given a playlist_id and list of track uris
     """
     def add_items_to_playlist(self, playlist_id: str, items: list):
-        to_be_added = self.get_uri(items)
-        self.spotipy.playlist_add_items(playlist_id, to_be_added)
+        self.spotipy.playlist_add_items(playlist_id, items)
 
     """
     Deletes tracks from a playlist given a playlist_id and list of track uris
     """
     def remove_playlist_tracks(self, playlist_id: str, items: list):
-        to_be_removed = self.get_uri(items)
-        self.spotipy.playlist_remove_all_occurrences_of_items(playlist_id, to_be_removed)
+        self.spotipy.playlist_remove_all_occurrences_of_items(playlist_id, items)
     
+    def check_tracks(self, items):
+        return self.spotipy.current_user_saved_contains(items)
+
     """
     Utilized to see if dates are older than today's date as it will be run once a week
     """
