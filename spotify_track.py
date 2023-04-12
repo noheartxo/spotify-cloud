@@ -103,7 +103,7 @@ class Spotify:
         date_today = date.today()
         for item in results['items']:
             added_at = datetime.strptime(item['added_at'][0:10], "%Y-%m-%d").date()
-            if date_today >= added_at:
+            if date_today.day - added_at.day > 7:
                 track = item['track']['uri']
                 verified.append(track)
         return verified
